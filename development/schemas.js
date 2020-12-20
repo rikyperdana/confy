@@ -33,6 +33,11 @@ var schemas = {
     }
   },
   article: {
+    articleID: {
+      type: String,
+      autoform: {type: 'hidden'},
+      autoValue: () => randomId()
+    },
     title: {type: String, label: 'Judul Artikel'},
     keywords: {type: Array, label: 'Kata kunci'},
     'keywords.$': {type: String},
@@ -60,6 +65,16 @@ var schemas = {
       type: String,
       autoform: {type: 'hidden'},
       autoValue: () => JSON.parse(localStorage.login)._id
+    }
+  },
+  review: {
+    text: {type: String, autoform: {type: 'textarea'}},
+    status: {
+      type: Number,
+      autoform: {type: 'select', options: () => [
+        {value: 1, label: 'Perbaiki'},
+        {value: 2, label: 'Tolak'},
+      ]}
     }
   }
 },

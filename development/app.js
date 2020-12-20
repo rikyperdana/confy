@@ -44,7 +44,7 @@ var comp = {
                         ['title'], ['abstract'],
                         ['keywords', 'authors'],
                         ['fileLink', 'jle'],
-                        ['entryDate', 'eventTarget', 'submiter']
+                        ['articleID', 'entryDate', 'eventTarget', 'submiter']
                       ]},
                       action: doc => updateBoth(
                         'events', state.eventDetail._id,
@@ -64,8 +64,8 @@ var comp = {
                   title: i.title, submiter: '', authors: i.authors.join('; '), tanggal: hari(i.entryDate)
                 }, data: i})),
                 onclick: data => _.assign(mgState, {comp: () => [
-                  m('h1', 'Rincian Artikel'),
-                  m('.box', m('table.table',
+                  m('h2', 'Rincian Artikel'),
+                  m('.box', m('.table-container', m('table.table',
                     m('tr',
                       m('th', 'Submiter'), m('td', data.submiter),
                       m('th', 'Tanggal submisi'), m('td', data.entryDate)
@@ -77,12 +77,56 @@ var comp = {
                     m('tr',
                       m('th', 'Authors'), m('td', data.authors.join(', ')),
                       m('th', 'Keywords'), m('td', data.keywords.join(', ')),
-                    ),
-                    m('tr', m('td', 'Abstract: '+data.abstract))
-                  ))
+                    )
+                  ), m('p', 'Abstract: '+(data.abstract || '')))),
+                  m('.button.is-info', {
+                    onclick: () => updateBoth(
+                      'events', state.eventDetail._id,
+                      _.assign(state.eventDetail, {articles: state.eventDetail.articles.map(
+                        i => i.articleID === data.articleID ?
+                        _.assign(i, {reviews: [
+                          ...(i.reviews || []),
+                          {requestDate: _.now()}
+                        ]}) : i
+                      )})
+                    )
+                  }, makeIconLabel('download', 'Permohonan Review')),
+                  m('br'), m('br'),
+                  _.get(data, 'reviews') && m(autoTable({
+                    id: 'reviewsTable',
+                    heads: {
+                      requestDate: 'Tanggal permohonan', respondDate: 'Tanggal respon',
+                      text: 'Ulasan reviewer', status: 'Status ulasan'
+                    },
+                    rows: data.reviews.map(i => ({row: {
+                      requestDate: hari(i.requestDate), respondDate: i.respondDate,
+                      text: i.text, status: i.status
+                    }, data: i})),
+                    onclick: dataReview => [
+                      _.assign(state, {modalReview: m('.box',
+                        m('h3', 'Rincian Ulasan'),
+                        m(autoForm({
+                          id: 'reviewForm', schema: schemas.review,
+                          action: doc => console.log(
+                            'events', state.eventDetail._id,
+                            _.assign(state.eventDetail, {
+                              articles: state.eventDetail.articles.map(
+                                i => i.articleID === data.articleID ?
+                                _.assign(i, {reviews: data.reviews.map(
+                                  j => j.requestDate === dataReview.requestDate ?
+                                  _.assign(j, doc) : j
+                                )}) : i
+                              )
+                            })
+                          )
+                        }))
+                      )}),
+                      m.redraw()
+                    ]
+                  })),
+                  makeModal('modalReview')
                 ]})
               })),
-              makeModal('modalSubmisi')
             ]}),
             m.redraw()
           ]
