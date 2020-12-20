@@ -34,53 +34,65 @@ var comp = {
                   m('th', 'Terakhir tutup'), m('td', hari(_.get(state, 'eventDetail.tutup')))
                 )
               ))),
-              m('.button.is-info',
-                {onclick: () => [
-                  _.assign(mgState, {comp: () => [
-                    m('h2', 'Form'),
-                    m(autoForm({
-                      id: 'submissionForm', schema: schemas.article,
-                      layout: {top: [
-                        ['title'], ['abstract'],
-                        ['keywords', 'authors'],
-                        ['fileLink', 'jle'],
-                        ['articleID', 'entryDate', 'eventTarget', 'submiter']
-                      ]},
-                      action: doc => updateBoth(
-                        'events', state.eventDetail._id,
-                        _.assign(state.eventDetail, {articles: [
-                          ...(state.eventDetail.articles || []), doc
-                        ]})
-                      )
-                    }))
-                  ]})
-                ]},
-                makeIconLabel('download', 'Tambah submisi')
-              ), m('br'), m('br'),
+              withThis(
+                JSON.parse(localStorage.login || '{}'),
+                user => ands([
+                  user.peran === 'submiter',
+                  !(state.eventDetail.articles || []).filter(i => i.submiter === user._id).length
+                ])
+              ) && [
+                m('.button.is-info',
+                  {onclick: () => [
+                    _.assign(mgState, {comp: () => [
+                      m('h2', 'Form'),
+                      m(autoForm({
+                        id: 'submissionForm', schema: schemas.article,
+                        layout: {top: [
+                          ['title'], ['abstract'],
+                          ['keywords', 'authors'],
+                          ['fileLink', 'jle'],
+                          ['articleID', 'entryDate', 'eventTarget', 'submiter']
+                        ]},
+                        action: doc => updateBoth(
+                          'events', state.eventDetail._id,
+                          _.assign(state.eventDetail, {articles: [
+                            ...(state.eventDetail.articles || []), doc
+                          ]})
+                        )
+                      }))
+                    ]})
+                  ]},
+                  makeIconLabel('download', 'Tambah submisi')
+                ), m('br'), m('br')
+              ],
               _.get(state, 'eventDetail.articles') && m(autoTable({
                 id: 'articlesTable',
                 heads: {title: 'Judul Artikel', submiter: 'Pengunggah', authors: 'Penulis', tanggal: 'Tanggal Submisi'},
                 rows: state.eventDetail.articles.map(i => ({row: {
-                  title: i.title, submiter: '', authors: i.authors.join('; '), tanggal: hari(i.entryDate)
+                  title: i.title, submiter: lookUser(i.submiter),
+                  authors: i.authors.join('; '), tanggal: hari(i.entryDate)
                 }, data: i})),
                 onclick: data => _.assign(mgState, {comp: () => [
                   m('h2', 'Rincian Artikel'),
                   m('.box', m('.table-container', m('table.table',
                     m('tr',
-                      m('th', 'Submiter'), m('td', data.submiter),
-                      m('th', 'Tanggal submisi'), m('td', data.entryDate)
+                      m('th', 'Submiter'), m('td', lookUser(data.submiter)),
+                      m('th', 'Tanggal submisi'), m('td', hari(data.entryDate))
                     ),
                     m('tr',
                       m('th', 'Judul artikel'), m('td', data.title),
-                      m('th', 'Link file'), m('td', m('a', {href: data.fileLink}, 'Open'))
+                      m('th', 'Link file'), m('td', m('a', {href: data.fileLink, target: '_blank'}, 'Open'))
                     ),
                     m('tr',
                       m('th', 'Authors'), m('td', data.authors.join(', ')),
                       m('th', 'Keywords'), m('td', data.keywords.join(', ')),
                     )
                   ), m('p', 'Abstract: '+(data.abstract || '')))),
-                  m('.button.is-info', {
-                    onclick: () => updateBoth(
+                  _.get(JSON.parse(localStorage.login), 'peran') === 'submiter' && ors([
+                    !(data.reviews || []).length,
+                    (data.reviews || []).every(i => i.status),
+                  ]) && m('.button.is-info', {
+                    onclick: () => confirm('Yakin sudah mempersiapkan/memperbaharui dokumen?') && updateBoth(
                       'events', state.eventDetail._id,
                       _.assign(state.eventDetail, {articles: state.eventDetail.articles.map(
                         i => i.articleID === data.articleID ?
@@ -90,7 +102,7 @@ var comp = {
                         ]}) : i
                       )})
                     )
-                  }, makeIconLabel('download', 'Permohonan Review')),
+                  }, makeIconLabel('download', 'Tambah Permohonan Review')),
                   m('br'), m('br'),
                   _.get(data, 'reviews') && m(autoTable({
                     id: 'reviewsTable',
@@ -100,10 +112,10 @@ var comp = {
                     },
                     rows: data.reviews.map(i => ({row: {
                       requestDate: hari(i.requestDate), respondDate: hari(i.respondDate),
-                      text: i.text, status: [
+                      text: i.text, status: _.get([
                         {value: 1, label: 'Perbaiki'},
                         {value: 2, label: 'Ditolak'}
-                      ].find(j => j.value === i.status).label
+                      ].find(j => j.value === i.status), 'label') || 'Menunggu respon'
                     }, data: i})),
                     onclick: dataReview => [
                       _.assign(state, {modalReview: m('.box',

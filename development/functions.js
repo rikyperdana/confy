@@ -1,5 +1,9 @@
 var state = {},
 
+withThis = (obj, cb) => cb(obj),
+
+ors = array => array.find(Boolean),
+
 randomId = () => [1, 1].map(() =>
   Math.random().toString(36).slice(2)
 ).join(''),
@@ -47,4 +51,9 @@ updateBoth = (collName, _id, doc, cb) => withThis(
       io().emit('datachange', collName, doc)
     ]
   )
-)
+),
+
+lookUser = id =>
+  !id ? '-' : _.get(state.usersList.find(
+    i => i._id === id
+  ), 'fullName') || '-'
