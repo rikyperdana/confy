@@ -25,10 +25,7 @@ mongoDB.MongoClient.connect(
     socket.on('login', (creds, cb) => withThis(
       client.db(process.env.dbname),
       db => db.collection('users').findOne(
-        { // hanya user aktif yang boleh login
-          username: creds.username,
-          keaktifan: 1
-        },
+        {username: creds.username},
         (err, res) => res && bcrypt.compare(
           // tes kebenaran password
           creds.password, res.password,

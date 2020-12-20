@@ -1,101 +1,4 @@
-var state = {},
-
-randomId = () => [1, 1].map(() =>
-  Math.random().toString(36).slice(2)
-).join(''),
-
-hari = (timestamp, hour) =>
-  timestamp && moment(timestamp)
-  .format('Do MMMM YYYY'+(hour ? ', hh:mm' : '')),
-
-makeIconLabel = (icon, label) => [
-  m('span.icon', m('i.fas.fa-'+icon)),
-  m('span', label)
-],
-
-makeModal = name => m('.modal',
-  {class: state[name] && 'is-active'},
-  m('.modal-background'),
-  m('.modal-content', state[name]),
-  m('.modal-close.is-large', {onclick: () =>
-    [state[name] = null, m.redraw()]
-  })
-),
-
-db = new Dexie('conference'),
-
-schemas = {
-  user: {
-    _id: {
-      type: String,
-      autoform: {type: 'hidden'},
-      autoValue: () => randomId()
-    },
-    username: {type: String},
-    password: {type: String, autoform: {type: 'password'}},
-    fullName: {type: String, label: 'Nama Lengkap'},
-    email: {type: String, optional: true},
-    peran: {
-      type: String,
-      autoform: {
-        type: 'select',
-        options: () => ['admin', 'submiter'].map(
-          i => ({value: i, label: _.startCase(i)})
-        )
-      },
-    }
-  },
-  event: {
-    _id: {
-      type: String,
-      autoform: {type: 'hidden'},
-      autoValue: () => randomId()
-    },
-    title: {
-      type: String,
-      label: 'Judul Event'
-    },
-    create: {
-      type: Number,
-      autoform: {type: 'hidden'},
-      autoValue: () => _.now()
-    },
-    buka: {type: Date, label: 'Mulai buka submisi'},
-    tutup: {type: Date, label: 'Terakhir tutup submisi'}
-  },
-  article: {
-    title: {type: String, label: 'Judul Artikel'},
-    keywords: {type: Array, label: 'Kata kunci'},
-    'keywords.$': {type: String},
-    authors: {type: Array, label: 'Penulis'},
-    'authors.$': {type: String},
-    jle: {type: String, label: 'JLE Classification'},
-    fileLink: {type: String, autoform: {
-      help: 'Tautan Google Drive / Dropbox / OneDrive'
-    }},
-    entryDate: {
-      type: Number,
-      autoform: {type: 'hidden'},
-      autoValue: () => _.now()
-    },
-    eventTarget: {
-      type: String,
-      autoform: {type: 'hidden'},
-      autoValue: () => _.get(state, 'eventDetail._id')
-    }
-    // submiter: {type: String}
-  }
-},
-
-layouts = {
-  user: {top: [
-    ['username', 'password'],
-    ['fullName', 'email'],
-    ['peran', '_id']
-  ]}
-},
-
-comp = {
+var comp = {
   brand: { name: 'home', full: 'Dashboard'},
   start: {
     conferences: {
@@ -107,7 +10,8 @@ comp = {
               _.assign(state, {eventsList: array}),
               m.redraw()
             ]
-          )
+          ),
+          onupdate: () => console.log('sync')
         }, 'Daftar Events'),
         _.get(state, 'eventsList') &&
         m(autoTable({
@@ -137,28 +41,46 @@ comp = {
                     m(autoForm({
                       id: 'submissionForm', schema: schemas.article,
                       layout: {top: [
-                        ['title'], ['keywords', 'authors'],
-                        ['fileLink', 'jle'], ['entryDate', 'eventTarget']
+                        ['title'], ['abstract'],
+                        ['keywords', 'authors'],
+                        ['fileLink', 'jle'],
+                        ['entryDate', 'eventTarget', 'submiter']
                       ]},
-                      action: doc => [
-                        db.events.put(_.assign(state.eventDetail, {
-                          articles: [
-                            ...(state.eventDetail.articles || []),
-                            doc
-                          ]
-                        }))
-                      ]
+                      action: doc => updateBoth(
+                        'events', state.eventDetail._id,
+                        _.assign(state.eventDetail, {articles: [
+                          ...(state.eventDetail.articles || []), doc
+                        ]})
+                      )
                     }))
                   ]})
                 ]},
                 makeIconLabel('download', 'Tambah submisi')
               ), m('br'), m('br'),
-              m(autoTable({
+              _.get(state, 'eventDetail.articles') && m(autoTable({
                 id: 'articlesTable',
                 heads: {title: 'Judul Artikel', submiter: 'Pengunggah', authors: 'Penulis', tanggal: 'Tanggal Submisi'},
                 rows: state.eventDetail.articles.map(i => ({row: {
                   title: i.title, submiter: '', authors: i.authors.join('; '), tanggal: hari(i.entryDate)
-                }, data: i}))
+                }, data: i})),
+                onclick: data => _.assign(mgState, {comp: () => [
+                  m('h1', 'Rincian Artikel'),
+                  m('.box', m('table.table',
+                    m('tr',
+                      m('th', 'Submiter'), m('td', data.submiter),
+                      m('th', 'Tanggal submisi'), m('td', data.entryDate)
+                    ),
+                    m('tr',
+                      m('th', 'Judul artikel'), m('td', data.title),
+                      m('th', 'Link file'), m('td', m('a', {href: data.fileLink}, 'Open'))
+                    ),
+                    m('tr',
+                      m('th', 'Authors'), m('td', data.authors.join(', ')),
+                      m('th', 'Keywords'), m('td', data.keywords.join(', ')),
+                    ),
+                    m('tr', m('td', 'Abstract: '+data.abstract))
+                  ))
+                ]})
               })),
               makeModal('modalSubmisi')
             ]}),
@@ -172,13 +94,15 @@ comp = {
           comp: () => [
             m('h2', 'Form Tambah Event'),
             m(autoForm({
-              id: 'addEvent', schema: schemas.event,
-              action: doc => db.events.put(doc)
+              id: 'addEvent',
+              schema: schemas.event,
+              layout: layouts.event,
+              action: doc => insertBoth(
+                'events', doc,
+                console.log('event baru')
+              )
             }))
           ]
-        },
-        event: {
-          hideMenu: true,
         }
       }
     },
@@ -204,7 +128,13 @@ comp = {
                 id: 'updateUser', doc: data,
                 schema: schemas.user,
                 layout: layouts.user,
-                action: console.log
+                action: doc => db.users.toArray(
+                  array => !array.find(i => i.username === doc.username) &&
+                  io().emit('bcrypt', doc.password, password => db.users.put(
+                      _.assign(doc, {password, _id: data._id})
+                    )
+                  )
+                )
               }))
             )}),
             m.redraw()
@@ -220,14 +150,50 @@ comp = {
             m(autoForm({
               id: 'addUser', schema: schemas.user,
               layout: layouts.user,
-              action: doc => [
-                db.users.put(doc),
-                // reroute ke halaman users
-              ]
+              action: doc => db.users.toArray(
+                array => !array.find(i => i.username === doc.username) &&
+                io().emit(
+                  'bcrypt', doc.password,
+                  password => insertBoth('users',
+                    _.assign(doc, {password}),
+                    console.log
+                  )
+                )
+              )
             }))
           ]
+        },
+        login: {
+          hideMenu: true,
+          comp: m(autoForm({
+            id: 'login',
+            schema: {
+              username: {type: String},
+              password: {type: String, autoform: {type: 'password'}}
+            },
+            action: doc => io().emit('login', doc, res => res && [
+              localStorage.setItem('login', JSON.stringify(res.res)),
+              m.redraw()
+            ])
+          }))
         }
       }
+    }
+  },
+  end: {
+    name: 'user', full: 'User Menu',
+    comp: () => m('h1', 'User Profile'),
+    submenu: {
+      login: {
+        full: 'Sign In/Up', icon: 'sign-in-alt',
+        comp: () => comp.start.users.submenu.login.comp
+      },
+      profile: {
+        icon: 'address-card',
+        comp: () => m('h1', 'My Profile')
+      },
+      subs: {full: 'Subscription', icon: 'rss'},
+      logout: {icon: 'sign-out-alt'}
     }
   }
 }
