@@ -99,27 +99,35 @@ var comp = {
                       text: 'Ulasan reviewer', status: 'Status ulasan'
                     },
                     rows: data.reviews.map(i => ({row: {
-                      requestDate: hari(i.requestDate), respondDate: i.respondDate,
-                      text: i.text, status: i.status
+                      requestDate: hari(i.requestDate), respondDate: hari(i.respondDate),
+                      text: i.text, status: [
+                        {value: 1, label: 'Perbaiki'},
+                        {value: 2, label: 'Ditolak'}
+                      ].find(j => j.value === i.status).label
                     }, data: i})),
                     onclick: dataReview => [
                       _.assign(state, {modalReview: m('.box',
                         m('h3', 'Rincian Ulasan'),
-                        m(autoForm({
-                          id: 'reviewForm', schema: schemas.review,
-                          action: doc => console.log(
+                        _.get(JSON.parse(localStorage.login || '{}'), 'peran') === 'admin' ? m(autoForm({
+                          id: 'reviewForm',
+                          schema: schemas.review,
+                          doc: dataReview,
+                          action: doc => updateBoth(
                             'events', state.eventDetail._id,
                             _.assign(state.eventDetail, {
                               articles: state.eventDetail.articles.map(
                                 i => i.articleID === data.articleID ?
                                 _.assign(i, {reviews: data.reviews.map(
                                   j => j.requestDate === dataReview.requestDate ?
-                                  _.assign(j, doc) : j
+                                  _.assign(j, doc, {respondDate: _.now()}) : j
                                 )}) : i
                               )
                             })
                           )
-                        }))
+                        })) : [
+                          m('p', 'Status :'),
+                          m('p', 'Ulasan :')
+                        ]
                       )}),
                       m.redraw()
                     ]
@@ -174,8 +182,8 @@ var comp = {
                 layout: layouts.user,
                 action: doc => db.users.toArray(
                   array => !array.find(i => i.username === doc.username) &&
-                  io().emit('bcrypt', doc.password, password => db.users.put(
-                      _.assign(doc, {password, _id: data._id})
+                  io().emit('bcrypt', doc.password, password => updateBoth(
+                      'users', data._id, _.assign(doc, {password})
                     )
                   )
                 )

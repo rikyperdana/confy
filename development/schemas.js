@@ -83,7 +83,7 @@ layouts = {
   user: {top: [
     ['username', 'password'],
     ['fullName', 'email'],
-    ['peran', '_id']
+    ['peran']
   ]},
   event: {top: [
     ['title'], ['buka', 'tutup'],

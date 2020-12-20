@@ -27,9 +27,7 @@ mongoDB.MongoClient.connect(
       db => db.collection('users').findOne(
         {username: creds.username},
         (err, res) => res && bcrypt.compare(
-          // tes kebenaran password
           creds.password, res.password,
-          // kembalikan doc user yg ditemukan, jgn diubah
           (err, result) => cb({res: result && res})
         )
       )
