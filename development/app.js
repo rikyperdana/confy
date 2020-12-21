@@ -4,15 +4,7 @@ var comp = {
     conferences: {
       icon: 'download',
       comp: () => [
-        m('h2', {
-          oncreate: () => db.events.toArray(
-            array => [
-              _.assign(state, {eventsList: array}),
-              m.redraw()
-            ]
-          ),
-          onupdate: () => console.log('sync')
-        }, 'Daftar Events'),
+        m('h2', {oncreate}, 'Daftar Events'),
         _.get(state, 'eventsList') &&
         m(autoTable({
           id: 'eventsTable',
@@ -27,11 +19,12 @@ var comp = {
               m('.box', m('.table-container', m('table.table',
                 m('tr',
                   m('th', 'Judul Event'), m('td', _.get(state, 'eventDetail.title')),
-                  m('th', 'Jumlah Submisi'), m('td', 0)
+                  m('th', 'Jumlah Submisi'), m('td', _.get(state, 'eventDetail.articles.length'))
                 ),
                 m('tr',
                   m('th', 'Mulai buka'), m('td', hari(_.get(state, 'eventDetail.buka'))),
-                  m('th', 'Terakhir tutup'), m('td', hari(_.get(state, 'eventDetail.tutup')))
+                  m('th', 'Terakhir tutup'), m('td', hari(_.get(state, 'eventDetail.tutup'))),
+                  m('th', 'Template Paper'), m('td', m('a', {href: 'https://google.com', target: '_blank'}, 'Link'))
                 )
               ))),
               withThis(
@@ -72,7 +65,9 @@ var comp = {
                   title: i.title, submiter: lookUser(i.submiter),
                   authors: i.authors.join('; '), tanggal: hari(i.entryDate)
                 }, data: i})),
-                onclick: data => _.assign(mgState, {comp: () => [
+                onclick: data =>
+                // kecuali admin, submiter hanya bisa buka rincian artikel dia sendiri
+                _.assign(mgState, {comp: () => [
                   m('h2', 'Rincian Artikel'),
                   m('.box', m('.table-container', m('table.table',
                     m('tr',
@@ -91,19 +86,21 @@ var comp = {
                   _.get(JSON.parse(localStorage.login), 'peran') === 'submiter' && ors([
                     !(data.reviews || []).length,
                     (data.reviews || []).every(i => i.status),
-                  ]) && m('.button.is-info', {
-                    onclick: () => confirm('Yakin sudah mempersiapkan/memperbaharui dokumen?') && updateBoth(
-                      'events', state.eventDetail._id,
-                      _.assign(state.eventDetail, {articles: state.eventDetail.articles.map(
-                        i => i.articleID === data.articleID ?
-                        _.assign(i, {reviews: [
-                          ...(i.reviews || []),
-                          {requestDate: _.now()}
-                        ]}) : i
-                      )})
-                    )
-                  }, makeIconLabel('download', 'Tambah Permohonan Review')),
-                  m('br'), m('br'),
+                  ]) && [
+                    m('.button.is-info', {
+                      onclick: () => confirm('Yakin sudah mempersiapkan/memperbaharui dokumen?') && updateBoth(
+                        'events', state.eventDetail._id,
+                        _.assign(state.eventDetail, {articles: state.eventDetail.articles.map(
+                          i => i.articleID === data.articleID ?
+                          _.assign(i, {reviews: [
+                            ...(i.reviews || []),
+                            {requestDate: _.now()}
+                          ]}) : i
+                        )})
+                      )
+                    }, makeIconLabel('download', 'Tambah Permohonan Review')),
+                    m('br'), m('br'),
+                  ],
                   _.get(data, 'reviews') && m(autoTable({
                     id: 'reviewsTable',
                     heads: {
@@ -173,12 +170,7 @@ var comp = {
     users: {
       icon: 'download',
       comp: () => [
-        m('h2', {
-          oncreate: () => db.users.toArray(array => [
-            _.assign(state, {usersList: array}),
-            m.redraw()
-          ])
-        }, 'Manajemen Pengguna'),
+        m('h2', {oncreate}, 'Manajemen Pengguna'),
         state.usersList && m(autoTable({
           id: 'usersTable',
           heads: {fullName: 'Nama Lengkap', email: 'E-Mail'},
@@ -227,20 +219,6 @@ var comp = {
             }))
           ]
         },
-        login: {
-          hideMenu: true,
-          comp: m(autoForm({
-            id: 'login',
-            schema: {
-              username: {type: String},
-              password: {type: String, autoform: {type: 'password'}}
-            },
-            action: doc => io().emit('login', doc, res => res && [
-              localStorage.setItem('login', JSON.stringify(res.res)),
-              m.redraw()
-            ])
-          }))
-        }
       }
     }
   },
@@ -250,11 +228,35 @@ var comp = {
     submenu: {
       login: {
         full: 'Sign In/Up', icon: 'sign-in-alt',
-        comp: () => comp.start.users.submenu.login.comp
+        comp: () => m('.columns',
+          m('.column'),
+          m('.column', m(autoForm({
+            id: 'login',
+            schema: {
+              username: {type: String},
+              password: {type: String, autoform: {type: 'password'}}
+            },
+            action: doc => io().emit('login', doc, res => res && [
+              localStorage.setItem('login', JSON.stringify(res.res)),
+              m.redraw()
+            ])
+          }))),
+          m('.column'),
+        )
       },
       profile: {
         icon: 'address-card',
-        comp: () => m('h1', 'My Profile')
+        comp: () => [
+          m('h1', 'My Profile'),
+          withThis(
+            JSON.parse(localStorage.login),
+            user => m('.box', m('.table-container', m('table.table',
+              m('tr',
+                m('th', 'Username'), m('td', user.username)
+              )
+            )))
+          )
+        ]
       },
       subs: {full: 'Subscription', icon: 'rss'},
       logout: {icon: 'sign-out-alt'}

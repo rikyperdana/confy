@@ -57,3 +57,15 @@ lookUser = id =>
   !id ? '-' : _.get(state.usersList.find(
     i => i._id === id
   ), 'fullName') || '-'
+
+oncreate = () => [
+  db.events.toArray(array => [
+    _.assign(state, {eventsList: array}),
+    m.redraw()
+  ]),
+  db.users.toArray(array => [
+    _.assign(state, {usersList: array}),
+    m.redraw()
+  ])
+]
+

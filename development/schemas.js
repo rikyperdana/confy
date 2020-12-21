@@ -21,6 +21,10 @@ var schemas = {
     },
     buka: {type: Date, label: 'Mulai buka submisi'},
     tutup: {type: Date, label: 'Terakhir tutup submisi'},
+    template: {
+      type: String, label: 'Template Paper',
+      autoform: {help: 'Tautan Google Drive / Dropbox / OneDrive'}
+    },
     created: {
       type: Number,
       autoform: {type: 'hidden'},
@@ -68,7 +72,7 @@ var schemas = {
     }
   },
   review: {
-    text: {type: String, autoform: {type: 'textarea'}},
+    text: {type: String, autoform: {type: 'textarea', rows: 14}},
     status: {
       type: Number,
       autoform: {type: 'select', options: () => [
@@ -86,7 +90,7 @@ layouts = {
     ['peran']
   ]},
   event: {top: [
-    ['title'], ['buka', 'tutup'],
+    ['title'], ['buka', 'tutup'], ['template'],
     ['created', 'creator']
   ]}
 }
