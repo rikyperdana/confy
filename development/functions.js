@@ -35,7 +35,7 @@ insertBoth = (collName, doc, cb) => withThis(
   obj => dbCall(
     {method: 'insertOne', collection: collName, document: obj},
     res => res && [
-      cb && cb(res), db[collName].put(obj),
+      cb && cb(obj), db[collName].put(obj),
       io().emit('datachange', collName, doc)
     ]
   )
@@ -67,5 +67,6 @@ oncreate = () => [
     _.assign(state, {usersList: array}),
     m.redraw()
   ])
-]
+],
 
+loginFirst = comp => !localStorage.login ? m('p', 'Mohon login terlebih dahulu') : comp

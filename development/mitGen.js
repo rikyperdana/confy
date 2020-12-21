@@ -76,24 +76,28 @@ mitGen = (obj, opts) => ({view: () => m('div',
   ),
   m('section.section', m('.container',
     {style: 'min-height:100vh'},
-    m('.content', mgState.comp ? mgState.comp() : [
-      m('h1', 'Dashboard'),
-      _.chunk(_.map(obj.start, (v, k) => [v, k]), 3).map(i =>
-        m('.columns', i.map(j => m('.column',
-          m('a.box', m('article.media',
-            {onclick: () => [
-              _.assign(mgState, {comp: j[0].comp}),
-              m.redraw()
-            ]},
-            m('.media-left', m('span.icon.has-text-primary',
-              m('i.fas.fa-2x.fa-'+j[0].icon))
-            ),
-            m('.media-content', m('.content',
-              m('h3', j[0].full || _.startCase(j[1]))
+    m('.content', ors([
+      mgState.comp && mgState.comp(),
+      _.get(obj.brand.comp) && obj.brand.comp(),
+      [
+        m('h1', 'Dashboard'),
+        _.chunk(_.map(obj.start, (v, k) => [v, k]), 3).map(i =>
+          m('.columns', i.map(j => m('.column',
+            m('a.box', m('article.media',
+              {onclick: () => [
+                _.assign(mgState, {comp: j[0].comp}),
+                m.redraw()
+              ]},
+              m('.media-left', m('span.icon.has-text-primary',
+                m('i.fas.fa-2x.fa-'+j[0].icon))
+              ),
+              m('.media-content', m('.content',
+                m('h3', j[0].full || _.startCase(j[1]))
+              ))
             ))
-          ))
-        )))
-      )
-    ])
+          )))
+        )
+      ]
+    ]))
   ))
 )})
