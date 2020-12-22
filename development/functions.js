@@ -56,7 +56,7 @@ lookUser = id =>
     i => i._id === id
   ), 'fullName') || '-'
 
-oncreate = () => [
+onupdate = () => [
   db.events.toArray(array => [
     _.assign(state, {eventsList: array}),
     m.redraw()
@@ -73,4 +73,21 @@ lookStatus = num => _.get([
   {value: 1, label: 'Perbaiki'},
   {value: 2, label: 'Tolak'},
   {value: 3, label: 'Final'},
-].find(i => i.value === num), 'label')
+].find(i => i.value === num), 'label'),
+
+getDifference = name => db[name].toArray(array => dbCall(
+  {
+    method: 'getDifference', collection: name,
+    clientColl: array.map(i =>
+      _.pick(i, ['_id', 'updated'])
+    )
+  },
+  res => res && [
+    db[name].bulkPut(res),
+    _.assign(state, {lastSync: _.now(), loading: false}),
+    console.log('synced'),
+    m.redraw()
+  ])
+),
+
+getDifferences = () => ['events', 'users'].map(name => getDifference(name))

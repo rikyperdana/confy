@@ -48,7 +48,7 @@ var schemas = {
     'keywords.$': {type: String},
     authors: {type: Array, label: 'Penulis'},
     'authors.$': {type: String},
-    jle: {type: String, label: 'JLE Classification'},
+    jel: {type: String, label: 'JEL Classification'},
     fileLink: {type: String, autoform: {
       help: 'Tautan Google Drive / Dropbox / OneDrive'
     }},

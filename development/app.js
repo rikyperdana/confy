@@ -28,7 +28,7 @@ var comp = {
               layout: {top: [
                 ['title'], ['abstract'],
                 ['keywords', 'authors'],
-                ['fileLink', 'jle'],
+                ['fileLink', 'jel'],
                 ['articleID', 'entryDate', 'eventTarget', 'submiter']
               ]},
               action: doc => updateBoth(
@@ -160,7 +160,10 @@ var menu = {
     conferences: {
       icon: 'download',
       comp: () => loginFirst([
-        m('h2', {oncreate}, 'Daftar Events'),
+        m('h2', {
+          oncreate: () => [onupdate(), getDifferences()],
+          onupdate
+        }, 'Daftar Events'),
         _.get(state, 'eventsList') &&
         m(autoTable({
           id: 'eventsTable',
@@ -200,7 +203,10 @@ var menu = {
     users: {
       icon: 'download',
       comp: () => loginFirst([
-        m('h2', {oncreate}, 'Manajemen Pengguna'),
+        m('h2', {
+          oncreate: () => [onupdate(), getDifferences()],
+          onupdate
+        }, 'Manajemen Pengguna'),
         state.usersList && m(autoTable({
           id: 'usersTable',
           heads: {fullName: 'Nama Lengkap', email: 'E-Mail'},
