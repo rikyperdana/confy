@@ -40,7 +40,7 @@ var comp = {
             }))
           ]})
         ]},
-        makeIconLabel('download', 'Tambah submisi')
+        makeIconLabel('plus', 'Tambah submisi')
       ), m('br'), m('br')
     ],
     m('h3', 'Artikel masuk'),
@@ -98,7 +98,7 @@ var comp = {
             ]}) : i
           )})
         )
-      }, makeIconLabel('download', 'Tambah Permohonan Review')),
+      }, makeIconLabel('plus', 'Tambah Permohonan Review')),
       m('br'), m('br'),
     ],
     _.get(data, 'reviews') && m(autoTable({
@@ -144,18 +144,24 @@ var comp = {
   ],
   login: () => m('.columns',
     m('.column'),
-    m('.column', m(autoForm({
-      id: 'login',
-      schema: {
-        username: {type: String},
-        password: {type: String, autoform: {type: 'password'}}
-      },
-      action: doc => io().emit('login', doc, res => res && [
-        localStorage.setItem('login', JSON.stringify(res.res)),
-        _.assign(mgState, {comp: menu.start.conferences.comp}),
-        m.redraw()
-      ])
-    }))),
+    m('.column', [
+      _.range(3).map(() => m('br')),
+      m('.level', m('.level-item.has-text-centered',
+        m('span.icon.is-large.has-text-primary', m('i.fas.fa-8x.fa-comments'))
+      )), m('br'),
+      m(autoForm({
+        id: 'login',
+        schema: {
+          username: {type: String},
+          password: {type: String, autoform: {type: 'password'}}
+        },
+        action: doc => io().emit('login', doc, res => res && [
+          localStorage.setItem('login', JSON.stringify(res.res)),
+          _.assign(mgState, {comp: menu.start.conferences.comp}),
+          m.redraw()
+        ])
+      }))
+    ]),
     m('.column'),
   ),
   users: () => [
@@ -198,7 +204,7 @@ var menu = {
   },
   start: {
     conferences: {
-      icon: 'download',
+      icon: 'comments',
       comp: () => loginFirst([
         m('h2', {
           oncreate: () => [onupdate(), getDifferences()],
@@ -241,11 +247,11 @@ var menu = {
       }
     },
     users: {
-      icon: 'download',
+      icon: 'users',
       comp: () => loginFirst(onlyAdmin(comp.users())),
       submenu: {
         add: {
-          full: 'Tambah User', icon: 'download',
+          full: 'Tambah User', icon: 'user-plus',
           comp: () => loginFirst(onlyAdmin([
             m('h2', 'Tambah User'),
             m(autoForm({
