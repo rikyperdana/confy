@@ -51,10 +51,10 @@ updateBoth = (collName, _id, doc, cb) => withThis(
   )
 ),
 
-lookUser = id =>
+lookUser = (id, prop) =>
   !id ? '-' : _.get(state.usersList.find(
     i => i._id === id
-  ), 'fullName') || '-'
+  ), prop || 'fullName') || '-',
 
 onupdate = () => [
   db.events.toArray(array => [

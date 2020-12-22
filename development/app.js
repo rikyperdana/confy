@@ -77,6 +77,10 @@ var comp = {
       m('tr',
         m('th', 'Authors'), m('td', data.authors.join(', ')),
         m('th', 'Keywords'), m('td', data.keywords.join(', ')),
+      ),
+      m('tr',
+        m('th', 'Kontak'), m('td', '+62'+lookUser(data.submiter, 'phone')),
+        m('th', 'Email'), m('td', lookUser(data.submiter, 'email')),
       )
     ), m('p', 'Abstract: '+(data.abstract || '')))),
     _.get(JSON.parse(localStorage.login), 'peran') === 'submiter' && ors([
@@ -101,11 +105,12 @@ var comp = {
       id: 'reviewsTable',
       heads: {
         requestDate: 'Tanggal permohonan', respondDate: 'Tanggal respon',
-        text: 'Ulasan reviewer', status: 'Status ulasan'
+        text: 'Ulasan reviewer', reviewer: 'Nama Reviewer', status: 'Status ulasan'
       },
       rows: data.reviews.map(i => ({row: {
         requestDate: hari(i.requestDate), respondDate: hari(i.respondDate),
-        text: i.text, status: lookStatus(i.status) || 'Menunggu ulasan'
+        text: i.text, reviewer: lookUser(i.reviewer),
+        status: lookStatus(i.status) || 'Menunggu ulasan'
       }, data: i})),
       onclick: dataReview => [
         _.assign(state, {modalReview: m('.box',
@@ -124,7 +129,11 @@ var comp = {
                     _.assign(j, doc, {respondDate: _.now()}) : j
                   )}) : i
                 )
-              })
+              }),
+              res => [
+                _.assign(state, {modalReview: null}),
+                m.redraw()
+              ]
             )
           })) : m('p', dataReview.text)
         )}),
@@ -164,16 +173,15 @@ var comp = {
         _.assign(state, {modalUser: m('.box',
           m('h3', 'Update User'),
           m(autoForm({
-        id: 'updateUser', doc: data,
-        schema: schemas.user,
-        layout: layouts.user,
-        action: doc => db.users.toArray(
-          array => !array.find(i => i.username === doc.username) &&
-          io().emit('bcrypt', doc.password, password => updateBoth(
-              'users', data._id, _.assign(doc, {password})
+            id: 'updateUser', doc: data,
+            schema: schemas.user,
+            layout: layouts.user,
+            action: doc => db.users.toArray(
+              array => !array.find(i => i.username === doc.username) &&
+              io().emit('bcrypt', doc.password, password => updateBoth(
+                'users', data._id, _.assign(doc, {password})
+              ))
             )
-          )
-        )
           }))
         )}),
         m.redraw()

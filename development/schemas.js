@@ -80,6 +80,11 @@ var schemas = {
         {value: 1, label: 'Perbaiki'},
         {value: 2, label: 'Tolak'},
       ]}
+    },
+    reviewer: {
+      type: String,
+      autoform: {type: 'hidden'},
+      autoValue: () => JSON.parse(localStorage.login)._id
     }
   }
 },
