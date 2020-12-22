@@ -2,8 +2,6 @@ var state = {},
 
 withThis = (obj, cb) => cb(obj),
 
-ors = array => array.find(Boolean),
-
 randomId = () => [1, 1].map(() =>
   Math.random().toString(36).slice(2)
 ).join(''),
@@ -69,4 +67,10 @@ oncreate = () => [
   ])
 ],
 
-loginFirst = comp => !localStorage.login ? m('p', 'Mohon login terlebih dahulu') : comp
+loginFirst = comp => !localStorage.login ? m('p', 'Mohon login terlebih dahulu') : comp,
+
+lookStatus = num => _.get([
+  {value: 1, label: 'Perbaiki'},
+  {value: 2, label: 'Tolak'},
+  {value: 3, label: 'Final'},
+].find(i => i.value === num), 'label')

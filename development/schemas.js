@@ -3,6 +3,7 @@ var schemas = {
     username: {type: String},
     password: {type: String, autoform: {type: 'password'}},
     fullName: {type: String, label: 'Nama Lengkap'},
+    phone: {type: Number, label: 'No. Handphone', optional: true},
     email: {type: String, optional: true},
     peran: {
       type: String,
@@ -85,9 +86,8 @@ var schemas = {
 
 layouts = {
   user: {top: [
-    ['username', 'password'],
-    ['fullName', 'email'],
-    ['peran']
+    ['username', 'password'], ['fullName'],
+    ['phone', 'email', 'peran']
   ]},
   event: {top: [
     ['title'], ['buka', 'tutup'], ['template'],

@@ -43,16 +43,24 @@ var comp = {
         makeIconLabel('download', 'Tambah submisi')
       ), m('br'), m('br')
     ],
+    m('h3', 'Artikel masuk'),
     _.get(state, 'eventDetail.articles') && m(autoTable({
       id: 'articlesTable',
-      heads: {title: 'Judul Artikel', submiter: 'Pengunggah', authors: 'Penulis', tanggal: 'Tanggal Submisi'},
+      heads: {
+        title: 'Judul Artikel', submiter: 'Pengunggah',
+        authors: 'Penulis', tanggal: 'Tanggal Submisi',
+        revisi: 'Revisi', lastStatus: 'Status Terakhir'
+      },
       rows: state.eventDetail.articles.map(i => ({row: {
         title: i.title, submiter: lookUser(i.submiter),
-        authors: i.authors.join('; '), tanggal: hari(i.entryDate)
+        authors: i.authors.join('; '), tanggal: hari(i.entryDate),
+        revisi: (i.reviews || []).length+' kali',
+        lastStatus: lookStatus(_.last(i.reviews || []).status) || 'Menunggu ulasan'
       }, data: i})),
-      onclick: data =>
-      // kecuali admin, submiter hanya bisa buka rincian artikel dia sendiri
-      _.assign(mgState, {comp: comp.article(data)})
+      onclick: data => withThis(
+        JSON.parse(localStorage.login),
+        user => user.peran === 'admin' ? true : data.submiter === user._id
+      ) && _.assign(mgState, {comp: comp.article(data)})
     })),
   ],
   article: data => () => [
@@ -97,10 +105,7 @@ var comp = {
       },
       rows: data.reviews.map(i => ({row: {
         requestDate: hari(i.requestDate), respondDate: hari(i.respondDate),
-        text: i.text, status: _.get([
-          {value: 1, label: 'Perbaiki'},
-          {value: 2, label: 'Ditolak'}
-        ].find(j => j.value === i.status), 'label') || 'Menunggu respon'
+        text: i.text, status: lookStatus(i.status) || 'Menunggu ulasan'
       }, data: i})),
       onclick: dataReview => [
         _.assign(state, {modalReview: m('.box',
@@ -121,10 +126,7 @@ var comp = {
                 )
               })
             )
-          })) : [
-            m('p', 'Status :'),
-            m('p', 'Ulasan :')
-          ]
+          })) : m('p', dataReview.text)
         )}),
         m.redraw()
       ]
