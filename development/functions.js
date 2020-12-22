@@ -69,6 +69,9 @@ onupdate = () => [
 
 loginFirst = comp => !localStorage.login ? m('p', 'Mohon login terlebih dahulu') : comp,
 
+onlyAdmin = comp => _.get(JSON.parse(localStorage.login), 'peran') === 'admin' ? comp
+  : m('p', 'Hanya untuk admin'),
+
 lookStatus = num => _.get([
   {value: 1, label: 'Perbaiki'},
   {value: 2, label: 'Tolak'},

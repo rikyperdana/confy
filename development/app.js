@@ -148,7 +148,39 @@ var comp = {
       ])
     }))),
     m('.column'),
-  )
+  ),
+  users: () => [
+    m('h2', {
+      oncreate: () => [onupdate(), getDifferences()],
+      onupdate
+    }, 'Manajemen Pengguna'),
+    state.usersList && m(autoTable({
+      id: 'usersTable',
+      heads: {fullName: 'Nama Lengkap', email: 'E-Mail'},
+      rows: state.usersList.map(i => ({row: {
+        fullName: i.fullName, email: i.email
+      }, data: i})),
+      onclick: data => [
+        _.assign(state, {modalUser: m('.box',
+          m('h3', 'Update User'),
+          m(autoForm({
+        id: 'updateUser', doc: data,
+        schema: schemas.user,
+        layout: layouts.user,
+        action: doc => db.users.toArray(
+          array => !array.find(i => i.username === doc.username) &&
+          io().emit('bcrypt', doc.password, password => updateBoth(
+              'users', data._id, _.assign(doc, {password})
+            )
+          )
+        )
+          }))
+        )}),
+        m.redraw()
+      ]
+    })),
+    makeModal('modalUser')
+  ]
 }
 
 var menu = {
@@ -181,7 +213,7 @@ var menu = {
       submenu: {
         add: {
           full: 'Tambah Event', icon: 'download',
-          comp: () => loginFirst([
+          comp: () => loginFirst(onlyAdmin([
             m('h2', 'Form Tambah Event'),
             m(autoForm({
               id: 'addEvent',
@@ -196,48 +228,17 @@ var menu = {
                 ]
               )
             }))
-          ])
+          ]))
         }
       }
     },
     users: {
       icon: 'download',
-      comp: () => loginFirst([
-        m('h2', {
-          oncreate: () => [onupdate(), getDifferences()],
-          onupdate
-        }, 'Manajemen Pengguna'),
-        state.usersList && m(autoTable({
-          id: 'usersTable',
-          heads: {fullName: 'Nama Lengkap', email: 'E-Mail'},
-          rows: state.usersList.map(i => ({row: {
-            fullName: i.fullName, email: i.email
-          }, data: i})),
-          onclick: data => [
-            _.assign(state, {modalUser: m('.box',
-              m('h3', 'Update User'),
-              m(autoForm({
-                id: 'updateUser', doc: data,
-                schema: schemas.user,
-                layout: layouts.user,
-                action: doc => db.users.toArray(
-                  array => !array.find(i => i.username === doc.username) &&
-                  io().emit('bcrypt', doc.password, password => updateBoth(
-                      'users', data._id, _.assign(doc, {password})
-                    )
-                  )
-                )
-              }))
-            )}),
-            m.redraw()
-          ]
-        })),
-        makeModal('modalUser')
-      ]),
+      comp: () => loginFirst(onlyAdmin(comp.users())),
       submenu: {
         add: {
           full: 'Tambah User', icon: 'download',
-          comp: () => loginFirst([
+          comp: () => loginFirst(onlyAdmin([
             m('h2', 'Tambah User'),
             m(autoForm({
               id: 'addUser', schema: schemas.user,
@@ -253,7 +254,7 @@ var menu = {
                 )
               )
             }))
-          ])
+          ]))
         },
       }
     }
