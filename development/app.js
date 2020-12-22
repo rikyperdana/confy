@@ -171,9 +171,9 @@ var comp = {
     }, 'Manajemen Pengguna'),
     state.usersList && m(autoTable({
       id: 'usersTable',
-      heads: {fullName: 'Nama Lengkap', email: 'E-Mail'},
+      heads: {fullName: 'Nama Lengkap', email: 'E-Mail', peran: 'Peranan'},
       rows: state.usersList.map(i => ({row: {
-        fullName: i.fullName, email: i.email
+        fullName: i.fullName, email: i.email, peran: lookUser(i._id, 'peran')
       }, data: i})),
       onclick: data => [
         _.assign(state, {modalUser: m('.box',
@@ -263,7 +263,10 @@ var menu = {
                   'bcrypt', doc.password,
                   password => insertBoth('users',
                     _.assign(doc, {password}),
-                    console.log
+                    res => res && [
+                      _.assign(mgState, {comp: comp.users}),
+                      m.redraw()
+                    ]
                   )
                 )
               )
