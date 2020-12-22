@@ -167,7 +167,7 @@ var comp = {
   users: () => [
     m('h2', {
       oncreate: () => [onupdate(), getDifferences()],
-      onupdate
+      // onupdate
     }, 'Manajemen Pengguna'),
     state.usersList && m(autoTable({
       id: 'usersTable',
@@ -208,7 +208,7 @@ var menu = {
       comp: () => loginFirst([
         m('h2', {
           oncreate: () => [onupdate(), getDifferences()],
-          onupdate
+          // onupdate
         }, 'Daftar Events'),
         _.get(state, 'eventsList') &&
         m(autoTable({
